@@ -26,7 +26,7 @@ def formatiraj_datum(datum):
 
 def formatiraj_vrijeme(vrijeme):
     if isinstance(vrijeme, str):
-        return vrijeme  # već je string
+        return vrijeme 
     return vrijeme.strftime('%H:%M') if vrijeme else None
 
 
