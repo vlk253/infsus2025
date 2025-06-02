@@ -1,12 +1,9 @@
-from flask import Flask,request,make_response,jsonify, render_template
+from flask import Flask,request,make_response,jsonify, render_template, redirect, url_for
 from pony import orm
 from datetime import date, time
 from collections import defaultdict
 from datetime import datetime
-from itertools import groupby
-from operator import attrgetter
 
-import random
 
 app = Flask(__name__)
 
@@ -38,11 +35,9 @@ def add_termin(json_request):
         vrsta_treninga = json_request['vrsta_treninga']
         kapacitet = int(json_request['kapacitet'])
         popunjenost = int(json_request['popunjenost'])
-
         datum = datetime.strptime(json_request['datum'], '%Y-%m-%d').date()
         pocetak = datetime.strptime(json_request['pocetak'], '%H:%M').time()
         kraj = datetime.strptime(json_request['kraj'], '%H:%M').time()
-
         with orm.db_session:
             Termin(datum=datum, pocetak=pocetak, kraj=kraj,
                    vrsta_treninga=vrsta_treninga,
@@ -117,6 +112,7 @@ def delete_termin(termin_id):
             return response
     except Exception as e:
         return {"response": "Fail", "error": str(e)}
+
 ##################################################################
 @app.route("/dodaj/termin", methods=["POST", "GET"])
 def dodaj_termin():
@@ -137,9 +133,7 @@ def dodaj_termin():
             if request.is_json:
                 return make_response(jsonify(response), 200)
             return make_response(render_template("dodaj.html"), 200)
-
         return make_response(jsonify(response), 400)
-
     return make_response(render_template("dodaj.html"), 200)
 
 
@@ -162,20 +156,13 @@ def vrati_termine():
 def vizualizacija():
     try:
         termini = orm.select(t for t in Termin)[:]
-
         dan_broj = defaultdict(int)
-
         for t in termini:
-            dan = t.datum  # ovo je date objekt
+            dan = t.datum
             dan_broj[dan] += 1
-
-        # Sortiranje po datumu (date objekti se mogu direktno sortirati)
         sorted_dan_broj = dict(sorted(dan_broj.items()))
-
-        # Formatiraj za prikaz u frontend
         x_axis = [d.strftime("%d. %b") for d in sorted_dan_broj.keys()]
         y_axis = list(sorted_dan_broj.values())
-
         response = {"response": "Success"}
         if response["response"] == "Success":
             return make_response(render_template("vizualizacija.html", y_axis=y_axis, x_axis=x_axis), 200)
@@ -185,10 +172,6 @@ def vizualizacija():
         error_response = {"response": "Error", "error_message": str(e)}
         return make_response(jsonify(error_response), 500)
 
-
-
-
-
 @app.route("/termin/<int:termin_id>", methods=["DELETE"])
 def obrisi_termin(termin_id):
     response = delete_termin(termin_id)
@@ -197,15 +180,19 @@ def obrisi_termin(termin_id):
     return make_response(jsonify(response), 400)
 
 @app.route("/termin/<int:termin_id>", methods=["PATCH"])
-def izmjeni_termin(termin_id):
+def patch_termin():
     try:
         json_request = request.json
+    except Exception as e:
+        return make_response(jsonify(response), 400)
+    if request.args:
+        termin_id = int(request.args.get("id"))
         response = patch_termin(termin_id, json_request)
         if response["response"] == "Success":
             return make_response(jsonify(response), 200)
         return make_response(jsonify(response), 400)
-    except Exception as e:
-        return make_response(jsonify({"response": str(e)}), 400)
+    response = {"response": "Query string missing"}
+    return make_response(jsonify(response), 400)
 
 @app.route("/termin/<int:termin_id>", methods=["PUT"])
 def zamijeni_termin(termin_id):
@@ -217,6 +204,32 @@ def zamijeni_termin(termin_id):
         return make_response(jsonify(response), 400)
     except Exception as e:
         return make_response(jsonify({"response": str(e)}), 400)
+
+@app.route("/izmjeni/<int:termin_id>", methods=["GET", "POST"])
+def izmjeni_termin(termin_id):
+    with orm.db_session:
+        termin = Termin.get(id=termin_id)
+        if not termin:
+            return make_response("Termin nije pronađen", 404)
+        if request.method == "POST":
+            termin.vrsta_treninga = request.form["vrsta_treninga"]
+            termin.datum = datetime.strptime(request.form["datum"], "%Y-%m-%d").date()
+            termin.pocetak = datetime.strptime(request.form["pocetak"], "%H:%M:%S").time()
+            termin.kraj = datetime.strptime(request.form["kraj"], "%H:%M:%S").time()
+            termin.kapacitet = int(request.form["kapacitet"])
+            termin.popunjenost = int(request.form["popunjenost"])
+            return redirect(url_for("vrati_termine"))
+
+        termin_data = {
+            "vrsta_treninga": termin.vrsta_treninga,
+            "datum": termin.datum.strftime("%Y-%m-%d") if hasattr(termin.datum, "strftime") else termin.datum,
+            "pocetak": termin.pocetak.strftime("%H:%M:%S") if hasattr(termin.pocetak, "strftime") else termin.pocetak,
+            "kraj": termin.kraj.strftime("%H:%M:%S") if hasattr(termin.kraj, "strftime") else termin.kraj,
+            "kapacitet": termin.kapacitet,
+            "popunjenost": termin.popunjenost,
+        }
+
+        return render_template("izmjeni_termin.html", termin=termin_data)
 
 @app.route("/", methods=["GET"])
 def home():
