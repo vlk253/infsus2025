@@ -6,3 +6,7 @@ E-teretana je web servis koji je zamišljen za pregled termina u teretani. Koris
 Funkcionalnosti su da se upisuju potrebni podaci u tekstualnom, date i time obliku koji se onda šalju i prikazuju na idućoj stranici, a tamo ih je moguće urediti ili obrisati. Prikazana je još i vizualizacija podataka u obliku stupičastog grafa.
 
 Pokretanje lokalno
+
+
+Usecase dijagram:
+![usecase](https://github.com/user-attachments/assets/c14d8722-3e89-4aba-8772-b8556fc5d386)
