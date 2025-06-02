@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <title>Popis Termina</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Bootstrap CSS i JS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">E-Teretana</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarNav" aria-controls="navbarNav"
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('home') }}">Početna</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('dodaj_termin') }}">Dodaj Termin</a></li>
+        <li class="nav-item"><a class="nav-link active" href="{{ url_for('vrati_termine') }}">Popis Termina</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('vizualizacija') }}">Vizualizacija</a></li>
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <h2 class="mb-4">Popis Termina</h2>
+  <ul class="list-group">
+    {% for termin in data %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{ termin.vrsta_treninga }}</strong><br>
+          <small>
+            Datum: {{ termin.datum }}<br>
+            Početak: {{ termin.pocetak }} | Kraj: {{ termin.kraj }}<br>
+            Kapacitet: {{ termin.kapacitet }} | Popunjenost: {{ termin.popunjenost }}
+          </small>
+        </div>
+        <div>
+          <a href="{{ url_for('izmjeni_termin', termin_id=termin.id) }}" class="btn btn-primary btn-sm">Uredi</a>
+          <button class="btn btn-danger btn-sm" onclick="obrisiTermin('{{ termin.id }}')">Obriši</button>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<script>
+  function obrisiTermin(terminId) {
+    if (confirm('Jeste li sigurni da želite obrisati ovaj termin?')) {
+      fetch(`/termin/${terminId}`, { method: 'DELETE' })
+        .then(response => response.json())
+        .then(data => {
+          if (data.response === 'Success') {
+            location.reload();
+          } else {
+            alert('Greška pri brisanju: ' + (data.error || 'Nepoznata greška'));
+          }
+        })
+        .catch(error => {
+          console.error('Greška u DELETE zahtjevu:', error);
+          alert('Greška pri komunikaciji sa serverom.');
+        });
+    }
+  }
+</script>
+
+<style>
+
+    body {
+  background-image: url("/static/pozadina.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+    </style>
+
+</body>
+</html>
