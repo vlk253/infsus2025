@@ -9,4 +9,5 @@ Pokretanje lokalno
 
 
 Usecase dijagram:
-![usecase](https://github.com/user-attachments/assets/c14d8722-3e89-4aba-8772-b8556fc5d386)
+![image](https://github.com/user-attachments/assets/df9b0ba3-7991-4c4c-90dd-3f403d276c90)
+
